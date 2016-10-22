@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -e
+set -o pipefail
+
+SCRIPTDIR="$(dirname "$(readlink -f "$0")")"
+IPFS_SERVICE_FILE="$(readlink -f "$SCRIPTDIR/ipfs.service")"
+
+export GOPATH="$HOME/go"
+export PATH="$HOME/go/bin:$PATH"
+
+# Rebuild ipfs dependencies
+set -x
+go get -u github.com/whyrusleeping/gx
+go get -u github.com/whyrusleeping/gx-go
+go install github.com/whyrusleeping/gx
+go install github.com/whyrusleeping/gx-go
+
+# Rebuild ipfs
+go get -d -u github.com/ipfs/go-ipfs
+pushd "$HOME/go/src/github.com/ipfs/go-ipfs"
+make clean
+make install
+popd
+
+# Properly link ipfs service
+CURRENT_SERVICE_FILE="$(readlink -f "$(find /etc/systemd -name ipfs.service)")"
+if [ "$IPFS_SERVICE_FILE" != "$CURRENT_SERVICE_FILE" ]; then
+  rm -f "$CURRENT_SERVICE_FILE" {/usr,}/lib/systemd/system/ipfs.service
+  ln -s "$IPFS_SERVICE_FILE" /lib/systemd/system
+  systemctl enable ipfs.service
+fi
+
+# Restart the service with a new binary
+systemctl daemon-reload
+systemctl stop ipfs.service
+cp "$HOME/go/bin/ipfs" "/usr/local/bin"
+systemctl start ipfs.service

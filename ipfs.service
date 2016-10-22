@@ -1,0 +1,9 @@
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon --enable-gc
+PermissionsStartOnly=true
+Type=simple
+User=ipfs
+Restart=always
