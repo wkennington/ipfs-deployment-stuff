@@ -23,7 +23,7 @@ make install
 popd
 
 # Properly link ipfs service
-CURRENT_SERVICE_FILE="$(readlink -f "$(find /etc/systemd -name ipfs.service)")"
+CURRENT_SERVICE_FILE="$(readlink -f "$(find /etc/systemd -name ipfs.service | head -n 1)")"
 if [ "$IPFS_SERVICE_FILE" != "$CURRENT_SERVICE_FILE" ]; then
   rm -f "$CURRENT_SERVICE_FILE" {/usr,}/lib/systemd/system/ipfs.service
   ln -s "$IPFS_SERVICE_FILE" /lib/systemd/system
